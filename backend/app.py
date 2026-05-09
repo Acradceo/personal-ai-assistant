@@ -12,7 +12,12 @@ import logging
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+
+# Configure CORS securely
+# Read ALLOWED_ORIGINS from environment, default to common local development URLs
+allowed_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5000,http://127.0.0.1:3000,http://127.0.0.1:5000")
+allowed_origins = [origin.strip() for origin in allowed_origins_env.split(",")]
+CORS(app, origins=allowed_origins)
 
 # Logging setup
 logging.basicConfig(level=logging.INFO)
