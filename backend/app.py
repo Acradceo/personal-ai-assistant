@@ -32,7 +32,8 @@ except Exception as e:
 
 # Store conversation history
 conversation_history = []
-tasks = []
+tasks = {}
+next_task_id = 1
 notes = []
 
 @app.route('/health', methods=['GET'])
@@ -92,18 +93,20 @@ def manage_tasks():
     """Manage tasks"""
     try:
         if request.method == 'POST':
+            global next_task_id
             data = request.get_json()
             task = {
-                "id": len(tasks) + 1,
+                "id": next_task_id,
                 "title": data.get('title'),
                 "description": data.get('description', ''),
                 "status": "pending",
                 "created_at": datetime.now().isoformat()
             }
-            tasks.append(task)
+            tasks[next_task_id] = task
+            next_task_id += 1
             return jsonify(task), 201
         
-        return jsonify({"tasks": tasks}), 200
+        return jsonify({"tasks": list(tasks.values())}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -113,7 +116,7 @@ def manage_tasks():
 def update_task(task_id):
     """Update or delete a task"""
     try:
-        task = next((t for t in tasks if t['id'] == task_id), None)
+        task = tasks.get(task_id)
         
         if not task:
             return jsonify({"error": "Task not found"}), 404
@@ -124,7 +127,7 @@ def update_task(task_id):
             return jsonify(task), 200
         
         if request.method == 'DELETE':
-            tasks.remove(task)
+            del tasks[task_id]
             return jsonify({"message": "Task deleted"}), 200
             
     except Exception as e:
@@ -192,9 +195,10 @@ def get_history():
 def clear_data():
     """Clear all data"""
     try:
-        global conversation_history, tasks, notes
+        global conversation_history, tasks, notes, next_task_id
         conversation_history = []
-        tasks = []
+        tasks = {}
+        next_task_id = 1
         notes = []
         return jsonify({"message": "All data cleared"}), 200
     except Exception as e:
