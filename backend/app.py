@@ -32,8 +32,14 @@ except Exception as e:
 
 # Store conversation history
 conversation_history = []
-tasks = []
-notes = []
+# ⚡ Bolt Optimization:
+# 💡 What: Replaced O(N) lists with O(1) dictionaries for tasks and notes storage
+# 🎯 Why: When fetching, updating, or deleting specific items by ID, `next((t for t in tasks if t['id'] == id))` takes O(N) time and `tasks.remove(task)` takes O(N) time.
+# 📊 Impact: O(1) time complexity for reads, updates, and deletes by ID instead of O(N) list scans and removals.
+tasks = {}
+notes = {}
+next_task_id = 1
+next_note_id = 1
 
 @app.route('/health', methods=['GET'])
 def health():
@@ -90,20 +96,23 @@ def chat():
 @app.route('/api/tasks', methods=['GET', 'POST'])
 def manage_tasks():
     """Manage tasks"""
+    global next_task_id
     try:
         if request.method == 'POST':
             data = request.get_json()
+            task_id = next_task_id
+            next_task_id += 1
             task = {
-                "id": len(tasks) + 1,
+                "id": task_id,
                 "title": data.get('title'),
                 "description": data.get('description', ''),
                 "status": "pending",
                 "created_at": datetime.now().isoformat()
             }
-            tasks.append(task)
+            tasks[task_id] = task
             return jsonify(task), 201
         
-        return jsonify({"tasks": tasks}), 200
+        return jsonify({"tasks": list(tasks.values())}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -113,18 +122,21 @@ def manage_tasks():
 def update_task(task_id):
     """Update or delete a task"""
     try:
-        task = next((t for t in tasks if t['id'] == task_id), None)
+        task = tasks.get(task_id)
         
         if not task:
             return jsonify({"error": "Task not found"}), 404
         
         if request.method == 'PUT':
             data = request.get_json()
-            task.update(data)
+            # Security: Whitelist fields to prevent mass assignment vulnerabilities
+            for field in ['title', 'description', 'status']:
+                if field in data:
+                    task[field] = data[field]
             return jsonify(task), 200
         
         if request.method == 'DELETE':
-            tasks.remove(task)
+            del tasks[task_id]
             return jsonify({"message": "Task deleted"}), 200
             
     except Exception as e:
@@ -134,20 +146,23 @@ def update_task(task_id):
 @app.route('/api/notes', methods=['GET', 'POST'])
 def manage_notes():
     """Manage notes"""
+    global next_note_id
     try:
         if request.method == 'POST':
             data = request.get_json()
+            note_id = next_note_id
+            next_note_id += 1
             note = {
-                "id": len(notes) + 1,
+                "id": note_id,
                 "title": data.get('title'),
                 "content": data.get('content', ''),
                 "created_at": datetime.now().isoformat(),
                 "tags": data.get('tags', [])
             }
-            notes.append(note)
+            notes[note_id] = note
             return jsonify(note), 201
         
-        return jsonify({"notes": notes}), 200
+        return jsonify({"notes": list(notes.values())}), 200
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
@@ -157,18 +172,21 @@ def manage_notes():
 def update_note(note_id):
     """Update or delete a note"""
     try:
-        note = next((n for n in notes if n['id'] == note_id), None)
+        note = notes.get(note_id)
         
         if not note:
             return jsonify({"error": "Note not found"}), 404
         
         if request.method == 'PUT':
             data = request.get_json()
-            note.update(data)
+            # Security: Whitelist fields to prevent mass assignment vulnerabilities
+            for field in ['title', 'content', 'tags']:
+                if field in data:
+                    note[field] = data[field]
             return jsonify(note), 200
         
         if request.method == 'DELETE':
-            notes.remove(note)
+            del notes[note_id]
             return jsonify({"message": "Note deleted"}), 200
             
     except Exception as e:
@@ -192,10 +210,12 @@ def get_history():
 def clear_data():
     """Clear all data"""
     try:
-        global conversation_history, tasks, notes
+        global conversation_history, tasks, notes, next_task_id, next_note_id
         conversation_history = []
-        tasks = []
-        notes = []
+        tasks = {}
+        notes = {}
+        next_task_id = 1
+        next_note_id = 1
         return jsonify({"message": "All data cleared"}), 200
     except Exception as e:
         logger.error(f"Clear error: {e}")
