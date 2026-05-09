@@ -109,27 +109,31 @@ def manage_tasks():
         logger.error(f"Task error: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/tasks/<int:task_id>', methods=['PUT', 'DELETE'])
-def update_task(task_id):
-    """Update or delete a task"""
+def _handle_item_update(item_id, item_list, item_name):
+    """Helper to handle PUT and DELETE for generic items in a list"""
     try:
-        task = next((t for t in tasks if t['id'] == task_id), None)
+        item = next((i for i in item_list if i['id'] == item_id), None)
         
-        if not task:
-            return jsonify({"error": "Task not found"}), 404
+        if not item:
+            return jsonify({"error": f"{item_name} not found"}), 404
         
         if request.method == 'PUT':
             data = request.get_json()
-            task.update(data)
-            return jsonify(task), 200
+            item.update(data)
+            return jsonify(item), 200
         
         if request.method == 'DELETE':
-            tasks.remove(task)
-            return jsonify({"message": "Task deleted"}), 200
+            item_list.remove(item)
+            return jsonify({"message": f"{item_name} deleted"}), 200
             
     except Exception as e:
-        logger.error(f"Update task error: {e}")
+        logger.error(f"Update {item_name.lower()} error: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route('/api/tasks/<int:task_id>', methods=['PUT', 'DELETE'])
+def update_task(task_id):
+    """Update or delete a task"""
+    return _handle_item_update(task_id, tasks, "Task")
 
 @app.route('/api/notes', methods=['GET', 'POST'])
 def manage_notes():
@@ -156,24 +160,7 @@ def manage_notes():
 @app.route('/api/notes/<int:note_id>', methods=['PUT', 'DELETE'])
 def update_note(note_id):
     """Update or delete a note"""
-    try:
-        note = next((n for n in notes if n['id'] == note_id), None)
-        
-        if not note:
-            return jsonify({"error": "Note not found"}), 404
-        
-        if request.method == 'PUT':
-            data = request.get_json()
-            note.update(data)
-            return jsonify(note), 200
-        
-        if request.method == 'DELETE':
-            notes.remove(note)
-            return jsonify({"message": "Note deleted"}), 200
-            
-    except Exception as e:
-        logger.error(f"Update note error: {e}")
-        return jsonify({"error": str(e)}), 500
+    return _handle_item_update(note_id, notes, "Note")
 
 @app.route('/api/history', methods=['GET'])
 def get_history():
