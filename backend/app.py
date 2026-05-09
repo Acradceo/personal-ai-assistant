@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import secrets
+from functools import wraps
 from dotenv import load_dotenv
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -188,7 +190,29 @@ def get_history():
         logger.error(f"History error: {e}")
         return jsonify({"error": str(e)}), 500
 
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = os.getenv('API_KEY')
+        if not api_key:
+            # If no API key is configured, allow for now or fail secure
+            # To fail secure, we'd return 401. Let's fail secure.
+            return jsonify({"error": "API key not configured on server"}), 500
+
+        provided_key = request.headers.get('X-API-Key')
+        if not provided_key:
+            auth_header = request.headers.get('Authorization')
+            if auth_header and auth_header.startswith('Bearer '):
+                provided_key = auth_header.split(' ')[1]
+
+        if not provided_key or not secrets.compare_digest(provided_key, api_key):
+            return jsonify({"error": "Unauthorized"}), 401
+
+        return f(*args, **kwargs)
+    return decorated_function
+
 @app.route('/api/clear', methods=['POST'])
+@require_api_key
 def clear_data():
     """Clear all data"""
     try:
