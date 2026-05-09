@@ -120,7 +120,11 @@ def update_task(task_id):
         
         if request.method == 'PUT':
             data = request.get_json()
-            task.update(data)
+            # Explicitly update only allowed fields to prevent mass assignment
+            allowed_fields = ['title', 'description', 'status']
+            for field in allowed_fields:
+                if field in data:
+                    task[field] = data[field]
             return jsonify(task), 200
         
         if request.method == 'DELETE':
@@ -164,7 +168,11 @@ def update_note(note_id):
         
         if request.method == 'PUT':
             data = request.get_json()
-            note.update(data)
+            # Explicitly update only allowed fields to prevent mass assignment
+            allowed_fields = ['title', 'content', 'tags']
+            for field in allowed_fields:
+                if field in data:
+                    note[field] = data[field]
             return jsonify(note), 200
         
         if request.method == 'DELETE':
