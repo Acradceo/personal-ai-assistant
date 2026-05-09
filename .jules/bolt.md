@@ -1,0 +1,3 @@
+## 2024-06-25 - Task Lookup Optimization
+**Learning:** For in-memory data structures managed by Flask/Python, using lists to manage collections results in O(n) lookup times and requires list iteration, which becomes a bottleneck. Further, depending on list lengths (`len(tasks) + 1`) to generate unique IDs leads to ID collisions when elements are removed.
+**Action:** When implementing or managing in-memory backend stores for collections (e.g., tasks, notes), use dictionaries keyed by unique IDs instead of lists. Introduce explicit explicit global ID counters (like `next_task_id = 1`) to generate new IDs and avoid collision issues on deletion.
