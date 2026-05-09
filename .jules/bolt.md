@@ -1,0 +1,3 @@
+## 2024-05-09 - [Data Structure Optimization for REST APIs]
+**Learning:** Storing REST API resources in `O(N)` lists makes fetching, updating, and deleting by ID inefficient, especially as the list grows. By changing lists to dictionaries keyed by `id`, we get `O(1)` time complexity for these operations. Additionally, relying on `len(list) + 1` for ID generation causes ID collisions if an item is deleted. Using an explicit `next_id` counter solves this.
+**Action:** Always default to dictionaries or hash maps when storing collections of entities that will be queried, updated, or deleted by a unique identifier in memory.
