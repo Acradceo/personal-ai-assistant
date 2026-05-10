@@ -1,5 +1,5 @@
 import pytest
-from backend.app import app, conversation_history
+from backend.app import app, conversation_history, get_cached_llm_response
 
 @pytest.fixture
 def client():
@@ -11,9 +11,11 @@ def client():
 def setup_and_teardown():
     # Clear conversation history before each test
     conversation_history.clear()
+    get_cached_llm_response.cache_clear()
     yield
     # Clear conversation history after each test
     conversation_history.clear()
+    get_cached_llm_response.cache_clear()
 
 def test_chat_happy_path(client, mocker):
     mocker.patch('langchain.llms.Ollama._call', return_value="Mock response", create=True)

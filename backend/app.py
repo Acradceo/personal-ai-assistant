@@ -8,6 +8,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+from functools import lru_cache
 
 load_dotenv()
 
@@ -85,6 +86,13 @@ def health():
 
 # ============ Chat Endpoint ============
 
+@lru_cache(maxsize=128)
+def get_cached_llm_response(message: str) -> str:
+    """Cache the response from the LLM for repeated queries."""
+    if llm is None:
+        raise ValueError("LLM is not available")
+    return llm.predict(message)
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     """Main chat endpoint"""
@@ -111,8 +119,8 @@ def chat():
             "timestamp": datetime.now().isoformat()
         })
         
-        # Get response from LLM
-        response = llm.predict(user_message)
+        # Get response from LLM (using cache for performance)
+        response = get_cached_llm_response(user_message)
         
         # Add response to history
         conversation_history.append({
