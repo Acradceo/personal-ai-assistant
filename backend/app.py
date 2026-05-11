@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import functools
 from dotenv import load_dotenv
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -83,6 +84,14 @@ def health():
         "ollama_available": llm is not None
     }), 200
 
+# ============ Caching Helpers ============
+
+@functools.lru_cache(maxsize=128)
+def get_llm_response(message: str) -> str:
+    """Wrapper for LLM prediction to enable caching"""
+    return llm.predict(message)
+
+
 # ============ Chat Endpoint ============
 
 @app.route('/api/chat', methods=['POST'])
@@ -111,8 +120,8 @@ def chat():
             "timestamp": datetime.now().isoformat()
         })
         
-        # Get response from LLM
-        response = llm.predict(user_message)
+        # Get response from LLM (cached)
+        response = get_llm_response(user_message)
         
         # Add response to history
         conversation_history.append({
