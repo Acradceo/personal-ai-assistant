@@ -1,0 +1,3 @@
+## 2024-05-24 - Accessibility and Visual Focus Enhancements
+**Learning:** Native focus outlines are often removed for aesthetic reasons, which severely impacts keyboard navigation. Replacing them with `box-shadow` provides a much smoother, customizable focus ring while retaining full accessibility. The lack of `box-sizing: border-box` is also a common cause of inputs overflowing containers when padding and 100% width are combined.
+**Action:** Always ensure `box-sizing: border-box` is set globally or at the component level to prevent layout issues with padded inputs. Replace native `outline` with `box-shadow` on `:focus-visible` to provide clear, accessible, and aesthetically pleasing focus indicators for keyboard users without affecting mouse users.
