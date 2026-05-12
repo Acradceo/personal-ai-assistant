@@ -156,8 +156,25 @@ def manage_tasks():
             tasks[task_id] = task
             return jsonify(task), 201
         
-        # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
+        # GET: return all tasks as list with optional pagination
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        all_tasks = list(tasks.values())
+        if limit is not None:
+            if limit < 1:
+                limit = 50
+            if offset < 0:
+                offset = 0
+            paginated_tasks = all_tasks[offset:offset + limit]
+            return jsonify({
+                "tasks": paginated_tasks,
+                "total": len(all_tasks),
+                "limit": limit,
+                "offset": offset
+            }), 200
+
+        return jsonify({"tasks": all_tasks}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -221,8 +238,25 @@ def manage_notes():
             notes[note_id] = note
             return jsonify(note), 201
         
-        # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
+        # GET: return all notes as list with optional pagination
+        limit = request.args.get('limit', type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        all_notes = list(notes.values())
+        if limit is not None:
+            if limit < 1:
+                limit = 50
+            if offset < 0:
+                offset = 0
+            paginated_notes = all_notes[offset:offset + limit]
+            return jsonify({
+                "notes": paginated_notes,
+                "total": len(all_notes),
+                "limit": limit,
+                "offset": offset
+            }), 200
+
+        return jsonify({"notes": all_notes}), 200
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
