@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Assistant</title>
     <style>
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             display: flex;
@@ -35,6 +38,12 @@
             border: 1px solid #ccc;
             border-radius: 4px;
             resize: none;
+            transition: box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        textarea:focus-visible {
+            outline: none;
+            border-color: #007BFF;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
         }
         button {
             width: 100%;
@@ -45,17 +54,22 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.2s ease, box-shadow 0.2s ease;
         }
         button:hover {
             background-color: #0056b3;
+        }
+        button:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.5);
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AI Assistant</h1>
-        <textarea placeholder="Type your message here..."></textarea>
-        <button>Send</button>
+        <textarea placeholder="Type your message here..." aria-label="Message to AI Assistant"></textarea>
+        <button aria-label="Send message">Send</button>
     </div>
 </body>
 </html>
