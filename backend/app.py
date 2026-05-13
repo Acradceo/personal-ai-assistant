@@ -8,6 +8,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+from itertools import islice
 
 load_dotenv()
 
@@ -156,8 +157,19 @@ def manage_tasks():
             tasks[task_id] = task
             return jsonify(task), 201
         
-        # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
+        # GET: return tasks with pagination
+        limit = request.args.get('limit', default=None, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        if limit is not None and limit < 1:
+            limit = None
+        if offset < 0:
+            offset = 0
+
+        # ⚡ BOLT OPTIMIZATION: Use itertools.islice to create an iterator over dictionary
+        # values without materializing the entire list in memory, saving RAM on large datasets.
+        paginated_tasks = list(islice(tasks.values(), offset, offset + limit if limit else None))
+        return jsonify({"tasks": paginated_tasks, "total": len(tasks)}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -221,8 +233,19 @@ def manage_notes():
             notes[note_id] = note
             return jsonify(note), 201
         
-        # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
+        # GET: return notes with pagination
+        limit = request.args.get('limit', default=None, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        if limit is not None and limit < 1:
+            limit = None
+        if offset < 0:
+            offset = 0
+
+        # ⚡ BOLT OPTIMIZATION: Use itertools.islice to create an iterator over dictionary
+        # values without materializing the entire list in memory, saving RAM on large datasets.
+        paginated_notes = list(islice(notes.values(), offset, offset + limit if limit else None))
+        return jsonify({"notes": paginated_notes, "total": len(notes)}), 200
         
     except Exception as e:
         logger.error(f"Notes error: {e}")

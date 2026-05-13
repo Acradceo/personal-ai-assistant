@@ -1,0 +1,3 @@
+## 2023-10-24 - Optimize Dictionary Value Iteration with itertools.islice
+**Learning:** Returning all items from an in-memory dictionary using `list(dict.values())` can be highly inefficient and memory-intensive for large datasets. Materializing the entire values list before returning negates the O(1) lookup benefits of using dictionaries for state.
+**Action:** When implementing pagination or returning subsets of in-memory dictionaries, always use `itertools.islice(dict.values(), offset, offset + limit)` to efficiently create an iterator over the dictionary values without loading the entire dataset into memory at once.
