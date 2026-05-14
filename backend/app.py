@@ -300,8 +300,9 @@ def clear_data():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/stats', methods=['GET'])
+@require_api_key
 def get_stats():
-    """Get statistics about stored data"""
+    """Get statistics about stored data (requires API key)"""
     try:
         return jsonify({
             "tasks_count": len(tasks),
