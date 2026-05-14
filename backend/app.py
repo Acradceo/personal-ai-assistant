@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
+import itertools
 from dotenv import load_dotenv
 from langchain.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -8,6 +9,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+from collections import deque
 
 load_dotenv()
 
@@ -38,7 +40,8 @@ except Exception as e:
     llm = None
 
 # Data structures - optimized for O(1) lookups
-conversation_history = []
+# Use deque with maxlen to prevent unbounded memory growth and memory leaks
+conversation_history = deque(maxlen=1000)
 tasks = {}  # Changed from list to dict for O(1) lookups
 notes = {}  # Changed from list to dict for O(1) lookups
 next_task_id = 1
@@ -157,7 +160,11 @@ def manage_tasks():
             return jsonify(task), 201
         
         # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
+        limit = request.args.get('limit', default=None, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        paginated_tasks = list(itertools.islice(tasks.values(), offset, offset + limit if limit else None))
+        return jsonify({"tasks": paginated_tasks}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -222,7 +229,11 @@ def manage_notes():
             return jsonify(note), 201
         
         # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
+        limit = request.args.get('limit', default=None, type=int)
+        offset = request.args.get('offset', default=0, type=int)
+
+        paginated_notes = list(itertools.islice(notes.values(), offset, offset + limit if limit else None))
+        return jsonify({"notes": paginated_notes}), 200
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
@@ -271,8 +282,9 @@ def get_history():
         if limit < 1 or limit > 1000:
             limit = 50
         
+        history_list = list(conversation_history)
         return jsonify({
-            "history": conversation_history[-limit:],
+            "history": history_list[-limit:],
             "total": len(conversation_history)
         }), 200
     except Exception as e:
@@ -287,7 +299,7 @@ def clear_data():
     """Clear all data (requires API key)"""
     try:
         global conversation_history, tasks, notes, next_task_id, next_note_id
-        conversation_history = []
+        conversation_history.clear()
         tasks = {}
         notes = {}
         next_task_id = 1
