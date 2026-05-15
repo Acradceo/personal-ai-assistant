@@ -8,6 +8,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+import itertools
 
 load_dotenv()
 
@@ -156,8 +157,21 @@ def manage_tasks():
             tasks[task_id] = task
             return jsonify(task), 201
         
-        # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
+        # GET: return all tasks as list, paginated
+        try:
+            limit_arg = request.args.get('limit')
+            offset_arg = request.args.get('offset', 0)
+
+            limit = int(limit_arg) if limit_arg is not None else None
+            offset = int(offset_arg)
+            if (limit is not None and limit < 0) or offset < 0:
+                raise ValueError("Limit and offset must be positive")
+        except ValueError:
+            return jsonify({"error": "Invalid pagination parameters"}), 400
+
+        paginated_tasks = list(itertools.islice(tasks.values(), offset, offset + limit if limit is not None else None))
+
+        return jsonify({"tasks": paginated_tasks, "total": len(tasks)}), 200
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -221,8 +235,21 @@ def manage_notes():
             notes[note_id] = note
             return jsonify(note), 201
         
-        # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
+        # GET: return all notes as list, paginated
+        try:
+            limit_arg = request.args.get('limit')
+            offset_arg = request.args.get('offset', 0)
+
+            limit = int(limit_arg) if limit_arg is not None else None
+            offset = int(offset_arg)
+            if (limit is not None and limit < 0) or offset < 0:
+                raise ValueError("Limit and offset must be positive")
+        except ValueError:
+            return jsonify({"error": "Invalid pagination parameters"}), 400
+
+        paginated_notes = list(itertools.islice(notes.values(), offset, offset + limit if limit is not None else None))
+
+        return jsonify({"notes": paginated_notes, "total": len(notes)}), 200
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
