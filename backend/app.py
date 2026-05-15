@@ -300,6 +300,7 @@ def clear_data():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/stats', methods=['GET'])
+@require_api_key
 def get_stats():
     """Get statistics about stored data"""
     try:
