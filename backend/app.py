@@ -131,135 +131,124 @@ def chat():
         logger.error(f"Chat error: {e}")
         return jsonify({"error": str(e)}), 500
 
+# ============ Resource Manager ============
+
+class GenericResourceManager:
+    def __init__(self, resource_dict, id_counter_name, create_item_func, allowed_fields, resource_name):
+        self.resource_dict = resource_dict
+        self.id_counter_name = id_counter_name
+        self.create_item_func = create_item_func
+        self.allowed_fields = allowed_fields
+        self.resource_name = resource_name
+
+    def manage(self):
+        try:
+            if request.method == 'POST':
+                data = request.get_json()
+                if not data or 'title' not in data:
+                    return jsonify({"error": "Missing required field: title"}), 400
+
+                item_id = globals()[self.id_counter_name]
+                globals()[self.id_counter_name] += 1
+
+                item = self.create_item_func(item_id, data)
+                self.resource_dict[item_id] = item
+                return jsonify(item), 201
+
+            # GET: return all items as list
+            return jsonify({f"{self.resource_name}s": list(self.resource_dict.values())}), 200
+
+        except Exception as e:
+            logger.error(f"{self.resource_name.capitalize()} error: {e}")
+            return jsonify({"error": str(e)}), 500
+
+    def detail(self, item_id):
+        try:
+            if item_id not in self.resource_dict:
+                return jsonify({"error": f"{self.resource_name.capitalize()} not found"}), 404
+
+            if request.method == 'GET':
+                return jsonify(self.resource_dict[item_id]), 200
+
+            if request.method == 'PUT':
+                data = request.get_json()
+                if not data:
+                    return jsonify({"error": "Invalid JSON"}), 400
+
+                item = self.resource_dict[item_id]
+
+                # Whitelist allowed fields to prevent mass assignment
+                for field in self.allowed_fields:
+                    if field in data:
+                        item[field] = data[field]
+
+                return jsonify(item), 200
+
+            if request.method == 'DELETE':
+                deleted_item = self.resource_dict.pop(item_id)
+                return jsonify({"message": f"{self.resource_name.capitalize()} deleted", self.resource_name: deleted_item}), 200
+
+        except Exception as e:
+            logger.error(f"{self.resource_name.capitalize()} detail error: {e}")
+            return jsonify({"error": str(e)}), 500
+
 # ============ Tasks Endpoints ============
+
+def create_task(item_id, data):
+    return {
+        "id": item_id,
+        "title": data.get('title'),
+        "description": data.get('description', ''),
+        "status": "pending",
+        "created_at": datetime.now().isoformat()
+    }
+
+task_manager = GenericResourceManager(
+    resource_dict=tasks,
+    id_counter_name='next_task_id',
+    create_item_func=create_task,
+    allowed_fields={'title', 'description', 'status'},
+    resource_name='task'
+)
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
 def manage_tasks():
     """Manage tasks - GET returns all tasks, POST creates new task"""
-    try:
-        if request.method == 'POST':
-            data = request.get_json()
-            if not data or 'title' not in data:
-                return jsonify({"error": "Missing required field: title"}), 400
-            
-            global next_task_id
-            task_id = next_task_id
-            next_task_id += 1
-            
-            task = {
-                "id": task_id,
-                "title": data.get('title'),
-                "description": data.get('description', ''),
-                "status": "pending",
-                "created_at": datetime.now().isoformat()
-            }
-            tasks[task_id] = task
-            return jsonify(task), 201
-        
-        # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
-        
-    except Exception as e:
-        logger.error(f"Task error: {e}")
-        return jsonify({"error": str(e)}), 500
+    return task_manager.manage()
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
 def task_detail(task_id):
     """Get, update, or delete a specific task"""
-    try:
-        if task_id not in tasks:
-            return jsonify({"error": "Task not found"}), 404
-        
-        if request.method == 'GET':
-            return jsonify(tasks[task_id]), 200
-        
-        if request.method == 'PUT':
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "Invalid JSON"}), 400
-            
-            task = tasks[task_id]
-            
-            # Whitelist allowed fields to prevent mass assignment
-            allowed_fields = {'title', 'description', 'status'}
-            for field in allowed_fields:
-                if field in data:
-                    task[field] = data[field]
-            
-            return jsonify(task), 200
-        
-        if request.method == 'DELETE':
-            deleted_task = tasks.pop(task_id)
-            return jsonify({"message": "Task deleted", "task": deleted_task}), 200
-            
-    except Exception as e:
-        logger.error(f"Task detail error: {e}")
-        return jsonify({"error": str(e)}), 500
+    return task_manager.detail(task_id)
 
 # ============ Notes Endpoints ============
+
+def create_note(item_id, data):
+    return {
+        "id": item_id,
+        "title": data.get('title'),
+        "content": data.get('content', ''),
+        "created_at": datetime.now().isoformat(),
+        "tags": data.get('tags', [])
+    }
+
+note_manager = GenericResourceManager(
+    resource_dict=notes,
+    id_counter_name='next_note_id',
+    create_item_func=create_note,
+    allowed_fields={'title', 'content', 'tags'},
+    resource_name='note'
+)
 
 @app.route('/api/notes', methods=['GET', 'POST'])
 def manage_notes():
     """Manage notes - GET returns all notes, POST creates new note"""
-    try:
-        if request.method == 'POST':
-            data = request.get_json()
-            if not data or 'title' not in data:
-                return jsonify({"error": "Missing required field: title"}), 400
-            
-            global next_note_id
-            note_id = next_note_id
-            next_note_id += 1
-            
-            note = {
-                "id": note_id,
-                "title": data.get('title'),
-                "content": data.get('content', ''),
-                "created_at": datetime.now().isoformat(),
-                "tags": data.get('tags', [])
-            }
-            notes[note_id] = note
-            return jsonify(note), 201
-        
-        # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
-        
-    except Exception as e:
-        logger.error(f"Notes error: {e}")
-        return jsonify({"error": str(e)}), 500
+    return note_manager.manage()
 
 @app.route('/api/notes/<int:note_id>', methods=['GET', 'PUT', 'DELETE'])
 def note_detail(note_id):
     """Get, update, or delete a specific note"""
-    try:
-        if note_id not in notes:
-            return jsonify({"error": "Note not found"}), 404
-        
-        if request.method == 'GET':
-            return jsonify(notes[note_id]), 200
-        
-        if request.method == 'PUT':
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "Invalid JSON"}), 400
-            
-            note = notes[note_id]
-            
-            # Whitelist allowed fields to prevent mass assignment
-            allowed_fields = {'title', 'content', 'tags'}
-            for field in allowed_fields:
-                if field in data:
-                    note[field] = data[field]
-            
-            return jsonify(note), 200
-        
-        if request.method == 'DELETE':
-            deleted_note = notes.pop(note_id)
-            return jsonify({"message": "Note deleted", "note": deleted_note}), 200
-            
-    except Exception as e:
-        logger.error(f"Note detail error: {e}")
-        return jsonify({"error": str(e)}), 500
+    return note_manager.detail(note_id)
 
 # ============ History Endpoints ============
 
