@@ -1,0 +1,3 @@
+## 2024-05-19 - [Missing Pagination]
+**Learning:** Returning all items from in-memory dictionaries (`tasks`, `notes`) without pagination limits creates performance issues (O(N) data transfer/processing) when the datasets grow large.
+**Action:** Add pagination using `limit` and `offset` arguments for `GET` endpoints that return lists. Since limits should not be enforced for clients relying on unpaginated responses, the default limit should be None (backward compatible), and pagination logic must gracefully handle empty limits, preferably using `itertools.islice(dict.values(), offset, offset + limit if limit is not None else None)`.

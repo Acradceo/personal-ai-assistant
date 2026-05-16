@@ -8,6 +8,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+import itertools
 
 load_dotenv()
 
@@ -156,8 +157,20 @@ def manage_tasks():
             tasks[task_id] = task
             return jsonify(task), 201
         
-        # GET: return all tasks as list
-        return jsonify({"tasks": list(tasks.values())}), 200
+        # GET: return tasks as paginated list
+        try:
+            offset_val = request.args.get('offset', '0')
+            limit_val = request.args.get('limit')
+            offset = int(offset_val)
+            limit = int(limit_val) if limit_val is not None else None
+
+            if offset < 0 or (limit is not None and limit < 0):
+                return jsonify({"error": "limit and offset must be non-negative"}), 400
+
+            paginated_tasks = list(itertools.islice(tasks.values(), offset, offset + limit if limit is not None else None))
+            return jsonify({"tasks": paginated_tasks}), 200
+        except ValueError:
+            return jsonify({"error": "limit and offset must be valid integers"}), 400
         
     except Exception as e:
         logger.error(f"Task error: {e}")
@@ -221,8 +234,20 @@ def manage_notes():
             notes[note_id] = note
             return jsonify(note), 201
         
-        # GET: return all notes as list
-        return jsonify({"notes": list(notes.values())}), 200
+        # GET: return notes as paginated list
+        try:
+            offset_val = request.args.get('offset', '0')
+            limit_val = request.args.get('limit')
+            offset = int(offset_val)
+            limit = int(limit_val) if limit_val is not None else None
+
+            if offset < 0 or (limit is not None and limit < 0):
+                return jsonify({"error": "limit and offset must be non-negative"}), 400
+
+            paginated_notes = list(itertools.islice(notes.values(), offset, offset + limit if limit is not None else None))
+            return jsonify({"notes": paginated_notes}), 200
+        except ValueError:
+            return jsonify({"error": "limit and offset must be valid integers"}), 400
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
