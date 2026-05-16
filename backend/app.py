@@ -129,7 +129,7 @@ def chat():
         
     except Exception as e:
         logger.error(f"Chat error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 # ============ Tasks Endpoints ============
 
@@ -161,7 +161,7 @@ def manage_tasks():
         
     except Exception as e:
         logger.error(f"Task error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
 def task_detail(task_id):
@@ -194,7 +194,7 @@ def task_detail(task_id):
             
     except Exception as e:
         logger.error(f"Task detail error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 # ============ Notes Endpoints ============
 
@@ -226,7 +226,7 @@ def manage_notes():
         
     except Exception as e:
         logger.error(f"Notes error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 @app.route('/api/notes/<int:note_id>', methods=['GET', 'PUT', 'DELETE'])
 def note_detail(note_id):
@@ -259,7 +259,7 @@ def note_detail(note_id):
             
     except Exception as e:
         logger.error(f"Note detail error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 # ============ History Endpoints ============
 
@@ -277,7 +277,7 @@ def get_history():
         }), 200
     except Exception as e:
         logger.error(f"History error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 # ============ Admin Endpoints ============
 
@@ -297,7 +297,7 @@ def clear_data():
         return jsonify({"message": "All data cleared"}), 200
     except Exception as e:
         logger.error(f"Clear error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 @app.route('/api/stats', methods=['GET'])
 def get_stats():
@@ -313,7 +313,7 @@ def get_stats():
         }), 200
     except Exception as e:
         logger.error(f"Stats error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
 
 if __name__ == '__main__':
     port = int(os.getenv('PORT', 5000))

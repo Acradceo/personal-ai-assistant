@@ -51,4 +51,4 @@ def test_chat_internal_error(client, mocker):
     response = client.post('/api/chat', json={"message": "Hello"})
     assert response.status_code == 500
     data = response.get_json()
-    assert data["error"] == "Test Error"
+    assert data["error"] == "An internal error occurred"
