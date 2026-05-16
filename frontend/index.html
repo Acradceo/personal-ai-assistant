@@ -36,6 +36,11 @@
             border-radius: 4px;
             resize: none;
         }
+        textarea:focus-visible {
+            outline: 2px solid #007BFF;
+            outline-offset: 2px;
+            border-color: #007BFF;
+        }
         button {
             width: 100%;
             padding: 10px;
@@ -49,12 +54,16 @@
         button:hover {
             background-color: #0056b3;
         }
+        button:focus-visible {
+            outline: 2px solid #007BFF;
+            outline-offset: 2px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>AI Assistant</h1>
-        <textarea placeholder="Type your message here..."></textarea>
+        <textarea placeholder="Type your message here..." aria-label="Message"></textarea>
         <button>Send</button>
     </div>
 </body>
