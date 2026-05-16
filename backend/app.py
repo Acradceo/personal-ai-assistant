@@ -199,6 +199,7 @@ def task_detail(task_id):
 # ============ Notes Endpoints ============
 
 @app.route('/api/notes', methods=['GET', 'POST'])
+@require_api_key
 def manage_notes():
     """Manage notes - GET returns all notes, POST creates new note"""
     try:
@@ -229,6 +230,7 @@ def manage_notes():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/notes/<int:note_id>', methods=['GET', 'PUT', 'DELETE'])
+@require_api_key
 def note_detail(note_id):
     """Get, update, or delete a specific note"""
     try:
