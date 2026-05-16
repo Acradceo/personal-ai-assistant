@@ -131,6 +131,33 @@ def chat():
         logger.error(f"Chat error: {e}")
         return jsonify({"error": str(e)}), 500
 
+# ============ Generic Resource Detail Handler ============
+
+def handle_resource_detail(resource_dict, resource_id, resource_name, allowed_fields):
+    """Generic utility to handle GET, PUT, and DELETE for resource details"""
+    if resource_id not in resource_dict:
+        return jsonify({"error": f"{resource_name} not found"}), 404
+
+    if request.method == 'GET':
+        return jsonify(resource_dict[resource_id]), 200
+
+    if request.method == 'PUT':
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+
+        resource = resource_dict[resource_id]
+
+        for field in allowed_fields:
+            if field in data:
+                resource[field] = data[field]
+
+        return jsonify(resource), 200
+
+    if request.method == 'DELETE':
+        deleted_resource = resource_dict.pop(resource_id)
+        return jsonify({"message": f"{resource_name} deleted", resource_name.lower(): deleted_resource}), 200
+
 # ============ Tasks Endpoints ============
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
@@ -167,31 +194,8 @@ def manage_tasks():
 def task_detail(task_id):
     """Get, update, or delete a specific task"""
     try:
-        if task_id not in tasks:
-            return jsonify({"error": "Task not found"}), 404
-        
-        if request.method == 'GET':
-            return jsonify(tasks[task_id]), 200
-        
-        if request.method == 'PUT':
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "Invalid JSON"}), 400
-            
-            task = tasks[task_id]
-            
-            # Whitelist allowed fields to prevent mass assignment
-            allowed_fields = {'title', 'description', 'status'}
-            for field in allowed_fields:
-                if field in data:
-                    task[field] = data[field]
-            
-            return jsonify(task), 200
-        
-        if request.method == 'DELETE':
-            deleted_task = tasks.pop(task_id)
-            return jsonify({"message": "Task deleted", "task": deleted_task}), 200
-            
+        allowed_fields = {'title', 'description', 'status'}
+        return handle_resource_detail(tasks, task_id, "Task", allowed_fields)
     except Exception as e:
         logger.error(f"Task detail error: {e}")
         return jsonify({"error": str(e)}), 500
@@ -232,31 +236,8 @@ def manage_notes():
 def note_detail(note_id):
     """Get, update, or delete a specific note"""
     try:
-        if note_id not in notes:
-            return jsonify({"error": "Note not found"}), 404
-        
-        if request.method == 'GET':
-            return jsonify(notes[note_id]), 200
-        
-        if request.method == 'PUT':
-            data = request.get_json()
-            if not data:
-                return jsonify({"error": "Invalid JSON"}), 400
-            
-            note = notes[note_id]
-            
-            # Whitelist allowed fields to prevent mass assignment
-            allowed_fields = {'title', 'content', 'tags'}
-            for field in allowed_fields:
-                if field in data:
-                    note[field] = data[field]
-            
-            return jsonify(note), 200
-        
-        if request.method == 'DELETE':
-            deleted_note = notes.pop(note_id)
-            return jsonify({"message": "Note deleted", "note": deleted_note}), 200
-            
+        allowed_fields = {'title', 'content', 'tags'}
+        return handle_resource_detail(notes, note_id, "Note", allowed_fields)
     except Exception as e:
         logger.error(f"Note detail error: {e}")
         return jsonify({"error": str(e)}), 500
