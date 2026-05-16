@@ -8,6 +8,7 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
+import functools
 
 load_dotenv()
 
@@ -36,6 +37,13 @@ try:
 except Exception as e:
     logger.error(f"✗ Failed to initialize Ollama: {e}")
     llm = None
+
+@functools.lru_cache(maxsize=100)
+def get_llm_prediction(message):
+    """Cached wrapper for LLM prediction to improve performance on identical queries"""
+    if llm is None:
+        raise Exception("Ollama LLM not available")
+    return llm.predict(message)
 
 # Data structures - optimized for O(1) lookups
 conversation_history = []
@@ -111,8 +119,8 @@ def chat():
             "timestamp": datetime.now().isoformat()
         })
         
-        # Get response from LLM
-        response = llm.predict(user_message)
+        # Get response from LLM using the cached wrapper
+        response = get_llm_prediction(user_message)
         
         # Add response to history
         conversation_history.append({
