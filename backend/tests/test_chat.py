@@ -16,8 +16,8 @@ def setup_and_teardown():
     conversation_history.clear()
 
 def test_chat_happy_path(client, mocker):
-    mocker.patch('langchain.llms.Ollama._call', return_value="Mock response", create=True)
-    mocker.patch('langchain.llms.Ollama.invoke', return_value="Mock response", create=True)
+    mocker.patch('langchain_community.llms.Ollama._call', return_value="Mock response", create=True)
+    mocker.patch('langchain_community.llms.Ollama.invoke', return_value="Mock response", create=True)
     mocked_predict = mocker.MagicMock(return_value="Mock response")
     mocker.patch('backend.app.llm', mocker.MagicMock(predict=mocked_predict))
 
