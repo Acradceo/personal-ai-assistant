@@ -134,6 +134,7 @@ def chat():
 # ============ Tasks Endpoints ============
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
+@require_api_key
 def manage_tasks():
     """Manage tasks - GET returns all tasks, POST creates new task"""
     try:
@@ -164,6 +165,7 @@ def manage_tasks():
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+@require_api_key
 def task_detail(task_id):
     """Get, update, or delete a specific task"""
     try:
