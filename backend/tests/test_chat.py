@@ -52,3 +52,58 @@ def test_chat_internal_error(client, mocker):
     assert response.status_code == 500
     data = response.get_json()
     assert data["error"] == "Test Error"
+
+def test_history_empty(client):
+    response = client.get('/api/history')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["history"] == []
+    assert data["total"] == 0
+
+def test_history_with_items(client):
+    from backend.app import conversation_history
+    conversation_history.extend([
+        {"role": "user", "content": "msg1"},
+        {"role": "assistant", "content": "resp1"},
+        {"role": "user", "content": "msg2"},
+        {"role": "assistant", "content": "resp2"}
+    ])
+
+    response = client.get('/api/history')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data["history"]) == 4
+    assert data["total"] == 4
+
+def test_history_limit(client):
+    from backend.app import conversation_history
+    for i in range(60):
+        conversation_history.append({"role": "user", "content": f"msg{i}"})
+
+    response = client.get('/api/history')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data["history"]) == 50
+    assert data["total"] == 60
+
+    response = client.get('/api/history?limit=10')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data["history"]) == 10
+
+    response = client.get('/api/history?limit=0')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data["history"]) == 50
+
+    response = client.get('/api/history?limit=1001')
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data["history"]) == 50
+
+def test_history_error(client, mocker):
+    mocker.patch('backend.app.len', side_effect=Exception('Test Error'), create=True)
+    response = client.get('/api/history')
+    assert response.status_code == 500
+    data = response.get_json()
+    assert data["error"] == "Test Error"
