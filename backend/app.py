@@ -86,6 +86,7 @@ def health():
 # ============ Chat Endpoint ============
 
 @app.route('/api/chat', methods=['POST'])
+@require_api_key
 def chat():
     """Main chat endpoint"""
     try:
