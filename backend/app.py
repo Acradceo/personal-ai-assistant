@@ -2,9 +2,9 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from dotenv import load_dotenv
-from langchain.llms import Ollama
-from langchain.callbacks.manager import CallbackManager
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
+from langchain_community.llms import Ollama
+from langchain_core.callbacks.manager import CallbackManager
+from langchain_core.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from datetime import datetime
 import logging
 import secrets
@@ -29,7 +29,7 @@ API_KEY = os.getenv("API_KEY", None)
 try:
     llm = Ollama(
         model="mistral",
-        callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
+        callbacks=CallbackManager([StreamingStdOutCallbackHandler()]),
         temperature=0.7,
     )
     logger.info("✓ Ollama LLM initialized successfully")
